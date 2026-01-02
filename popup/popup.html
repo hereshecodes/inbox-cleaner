@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inbox Cleaner</title>
+  <link rel="stylesheet" href="../styles/pip-boy-theme.css">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <!-- Auth Screen -->
+  <div id="auth-screen" class="screen">
+    <div class="header">
+      <div class="logo">
+        <span class="logo-icon">📧</span>
+        <h1>INBOX CLEANER</h1>
+      </div>
+      <div class="cursor">_</div>
+    </div>
+
+    <div class="content">
+      <div class="terminal-box">
+        <p>> SYSTEM REQUIRES GMAIL ACCESS</p>
+        <p>> ALL DATA PROCESSED LOCALLY</p>
+        <p>> NO DATA SENT TO EXTERNAL SERVERS</p>
+        <p>> PRIVACY FIRST DESIGN<span class="cursor">_</span></p>
+      </div>
+
+      <button class="btn btn-primary btn-block" id="connect-btn">
+        CONNECT GMAIL
+      </button>
+
+      <p class="privacy-note">
+        Only requests necessary permissions. Your emails never leave your browser.
+      </p>
+    </div>
+  </div>
+
+  <!-- Main Screen -->
+  <div id="main-screen" class="screen hidden">
+    <div class="header">
+      <div class="header-top">
+        <h1>INBOX CLEANER</h1>
+        <button class="btn btn-sm" id="settings-btn" title="Settings">⚙</button>
+      </div>
+      <div class="status">
+        <span class="status-dot"></span>
+        <span id="user-email">Connected</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat">
+          <div class="stat-value" id="stat-subscriptions">--</div>
+          <div class="stat-label">Subs</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="stat-old">--</div>
+          <div class="stat-label">Old</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="stat-size">--</div>
+          <div class="stat-label">MB</div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="actions">
+        <button class="btn btn-block" id="scan-btn">
+          <span>🔍</span> SCAN INBOX
+        </button>
+
+        <button class="btn btn-block btn-amber" id="unsubscribe-btn" disabled>
+          <span>✉️</span> UNSUBSCRIBE
+          <span class="badge" id="unsub-count">0</span>
+        </button>
+
+        <button class="btn btn-block" id="cleanup-btn" disabled>
+          <span>🗑️</span> BULK CLEANUP
+        </button>
+
+        <button class="btn btn-block" id="dashboard-btn">
+          <span>📊</span> OPEN DASHBOARD
+        </button>
+      </div>
+
+      <!-- Recent Subscriptions -->
+      <div class="section" id="subscriptions-section" style="display: none;">
+        <div class="section-header">
+          <span class="section-title">TOP SUBSCRIPTIONS</span>
+        </div>
+        <div id="subscriptions-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scanning Screen -->
+  <div id="scanning-screen" class="screen hidden">
+    <div class="header">
+      <h1>SCANNING</h1>
+    </div>
+    <div class="content">
+      <div class="scanning-animation">
+        <div class="spinner"></div>
+      </div>
+      <p class="scanning-status" id="scanning-status">Initializing...</p>
+      <div class="progress-container">
+        <div class="progress-bar-bg">
+          <div class="progress-bar" id="scan-progress" style="width: 0%"></div>
+        </div>
+        <div class="progress-text">
+          <span id="scan-count">0 emails</span>
+          <span id="scan-percent">0%</span>
+        </div>
+      </div>
+      <button class="btn btn-danger btn-block" id="cancel-scan-btn">CANCEL</button>
+    </div>
+  </div>
+
+  <!-- Settings Screen -->
+  <div id="settings-screen" class="screen hidden">
+    <div class="header">
+      <div class="header-top">
+        <h1>SETTINGS</h1>
+        <button class="btn btn-sm" id="back-btn">←</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="card">
+        <div class="card-title">Account</div>
+        <p class="text-dim" id="settings-email">user@gmail.com</p>
+        <button class="btn btn-danger btn-block btn-sm" id="disconnect-btn" style="margin-top: 12px;">
+          DISCONNECT
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Scan Settings</div>
+        <label class="checkbox">
+          <input type="checkbox" id="scan-all" checked>
+          <span>Include all mail (not just inbox)</span>
+        </label>
+      </div>
+
+      <div class="card">
+        <div class="card-title">About</div>
+        <p class="text-dim">Inbox Cleaner v1.0.0</p>
+        <p class="text-dim">Privacy-first Gmail cleanup</p>
+        <p class="text-dim">All processing happens locally</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="../lib/gmail-api.js"></script>
+  <script src="../lib/email-parser.js"></script>
+  <script src="../lib/categorizer.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

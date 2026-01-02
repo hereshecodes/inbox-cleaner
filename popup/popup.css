@@ -1,0 +1,203 @@
+/* Popup specific styles */
+
+body {
+  width: 360px;
+  min-height: 480px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.header {
+  padding: 16px;
+  background: var(--dark-card);
+  border-bottom: 2px solid var(--terminal-green);
+  box-shadow: 0 0 15px rgba(20, 240, 110, 0.2);
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header h1 {
+  font-size: 16px;
+  font-weight: normal;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  text-shadow: 0 0 8px var(--terminal-green);
+  margin: 0;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  font-size: 24px;
+}
+
+.content {
+  padding: 16px;
+}
+
+/* Auth screen */
+.terminal-box {
+  background: var(--dark-card);
+  border: 1px solid var(--dark-border);
+  padding: 16px;
+  margin-bottom: 20px;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.terminal-box p {
+  margin: 0;
+}
+
+.privacy-note {
+  font-size: 10px;
+  color: var(--terminal-green-dim);
+  text-align: center;
+  margin-top: 12px;
+}
+
+/* Stats */
+.stats-grid {
+  margin-bottom: 16px;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.actions .btn {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.actions .badge {
+  margin-left: auto;
+}
+
+/* Subscriptions section */
+.section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--dark-border);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.section-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--terminal-green-dim);
+}
+
+/* Subscription item */
+.subscription-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: var(--dark-card);
+  border: 1px solid var(--dark-border);
+  margin-bottom: 4px;
+  transition: all 0.2s;
+}
+
+.subscription-item:hover {
+  border-color: var(--terminal-green-dim);
+}
+
+.subscription-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dark);
+  border: 1px solid var(--dark-border);
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--terminal-amber);
+}
+
+.subscription-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.subscription-name {
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subscription-count {
+  font-size: 10px;
+  color: var(--terminal-green-dim);
+}
+
+.subscription-action {
+  flex-shrink: 0;
+}
+
+/* Scanning screen */
+.scanning-animation {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+.scanning-status {
+  text-align: center;
+  margin-bottom: 16px;
+  font-size: 12px;
+  color: var(--terminal-green-dim);
+}
+
+/* Settings */
+#settings-screen .card {
+  margin-bottom: 12px;
+}
+
+#settings-screen .checkbox {
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+/* Status in header */
+.header .status {
+  margin-top: 8px;
+  font-size: 11px;
+}
+
+/* Button states */
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn:disabled:hover {
+  background: transparent;
+  box-shadow: none;
+}
+
+.btn:disabled::before {
+  display: none;
+}

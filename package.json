@@ -1,0 +1,18 @@
+{
+  "name": "inbox-cleaner",
+  "version": "1.0.0",
+  "description": "Privacy-first Gmail cleanup Chrome extension. Mass unsubscribe, auto-organize, and bulk delete emails - all processing happens locally in your browser.",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "canvas": "^3.2.0"
+  }
+}
