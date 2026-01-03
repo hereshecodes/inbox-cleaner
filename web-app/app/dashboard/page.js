@@ -43,12 +43,42 @@ export default function Dashboard() {
   const [searchFilter, setSearchFilter] = useState('');
   const [showSummary, setShowSummary] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
+  const [showThemes, setShowThemes] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState('green');
   const [hasAiKey, setHasAiKey] = useState(false);
   const [lastScan, setLastScan] = useState('Never');
   const [loading, setLoading] = useState(true);
 
+  // Theme definitions
+  const themes = {
+    green: { name: 'Terminal Green', primary: '#14f06e', dim: '#0a8c3e' },
+    pink: { name: 'Hot Pink', primary: '#ff69b4', dim: '#c44d8a' },
+    purple: { name: 'Lavender', primary: '#b48eff', dim: '#8a5fcc' },
+    blue: { name: 'Cyber Blue', primary: '#00d4ff', dim: '#0099bb' },
+    gold: { name: 'Gold', primary: '#ffd700', dim: '#b89b00' },
+    red: { name: 'Cherry', primary: '#ff4d6d', dim: '#cc3d57' },
+  };
+
+  // Apply theme to CSS variables
+  const applyTheme = useCallback((themeKey) => {
+    const theme = themes[themeKey];
+    if (theme) {
+      document.documentElement.style.setProperty('--terminal-green', theme.primary);
+      document.documentElement.style.setProperty('--terminal-green-dim', theme.dim);
+      document.documentElement.style.setProperty('--terminal-green-bright', theme.primary);
+      localStorage.setItem('inbox-cleaner-theme', themeKey);
+      setCurrentTheme(themeKey);
+    }
+  }, []);
+
   // Check auth and load data on mount
   useEffect(() => {
+    // Load saved theme
+    const savedTheme = localStorage.getItem('inbox-cleaner-theme');
+    if (savedTheme && themes[savedTheme]) {
+      applyTheme(savedTheme);
+    }
+
     async function init() {
       try {
         const res = await fetch('/api/auth/session');
@@ -187,7 +217,7 @@ export default function Dashboard() {
     if (/@(slack|zoom|notion|figma|asana|trello|jira|github|gitlab)\./i.test(email)) {
       return 'Work';
     }
-    if (sender.unsubscribe ||
+    if (sender.unsubscribeUrl ||
         /newsletter@|digest@|updates?@|weekly@|daily@|news@/i.test(email) ||
         /@(substack|mailchimp|constantcontact|sendgrid)\./i.test(email)) {
       return 'Newsletters';
@@ -274,6 +304,14 @@ export default function Dashboard() {
           const senderName = extractName(from);
           const emailDate = headers.date ? new Date(headers.date).getTime() : 0;
           const listUnsubscribe = headers['list-unsubscribe'] || null;
+          // Parse unsubscribe URL from header (format: <url> or <mailto:...>)
+          let unsubscribeUrl = null;
+          if (listUnsubscribe) {
+            const httpMatch = listUnsubscribe.match(/<(https?:\/\/[^>]+)>/);
+            if (httpMatch) {
+              unsubscribeUrl = httpMatch[1];
+            }
+          }
 
           if (!senderMap.has(senderEmail)) {
             senderMap.set(senderEmail, {
@@ -282,8 +320,11 @@ export default function Dashboard() {
               count: 0,
               messageIds: [],
               lastEmailDate: 0,
-              unsubscribe: listUnsubscribe ? true : null,
+              unsubscribeUrl: unsubscribeUrl,
             });
+          } else if (unsubscribeUrl && !senderMap.get(senderEmail).unsubscribeUrl) {
+            // Update if we found an unsubscribe URL for this sender
+            senderMap.get(senderEmail).unsubscribeUrl = unsubscribeUrl;
           }
 
           const sender = senderMap.get(senderEmail);
@@ -571,6 +612,13 @@ export default function Dashboard() {
             </div>
             <button
               className="btn btn-sm"
+              onClick={() => setShowThemes(true)}
+              title="Change theme"
+            >
+              🎨
+            </button>
+            <button
+              className="btn btn-sm"
               onClick={() => setShowTutorial(true)}
               title="How to use"
             >
@@ -751,6 +799,18 @@ export default function Dashboard() {
                         )}
                         <span className="count-badge">{sender.count} emails</span>
                       </div>
+                      {sender.unsubscribeUrl && (
+                        <a
+                          href={sender.unsubscribeUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-sm unsubscribe-btn"
+                          onClick={(e) => e.stopPropagation()}
+                          title="Unsubscribe from this sender"
+                        >
+                          Unsub
+                        </a>
+                      )}
                     </div>
                   ))
                 )}
@@ -855,6 +915,37 @@ export default function Dashboard() {
 
             <button className="btn btn-primary btn-block" onClick={() => setShowTutorial(false)}>
               GOT IT!
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Theme Picker Modal */}
+      {showThemes && (
+        <div className="modal" onClick={() => setShowThemes(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>PICK A VIBE 🎨</h2>
+            <p className="text-dim" style={{ marginBottom: '20px' }}>Choose your color scheme:</p>
+
+            <div className="theme-grid">
+              {Object.entries(themes).map(([key, theme]) => (
+                <button
+                  key={key}
+                  className={`theme-option ${currentTheme === key ? 'active' : ''}`}
+                  onClick={() => applyTheme(key)}
+                  style={{
+                    '--theme-color': theme.primary,
+                    '--theme-dim': theme.dim,
+                  }}
+                >
+                  <span className="theme-swatch" style={{ background: theme.primary }}></span>
+                  <span className="theme-name">{theme.name}</span>
+                </button>
+              ))}
+            </div>
+
+            <button className="btn btn-block" onClick={() => setShowThemes(false)} style={{ marginTop: '20px' }}>
+              DONE
             </button>
           </div>
         </div>
