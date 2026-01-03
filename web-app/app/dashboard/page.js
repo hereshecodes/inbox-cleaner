@@ -48,6 +48,8 @@ export default function Dashboard() {
   const [hasAiKey, setHasAiKey] = useState(false);
   const [lastScan, setLastScan] = useState('Never');
   const [loading, setLoading] = useState(true);
+  const [autoSortEnabled, setAutoSortEnabled] = useState(false);
+  const [autoSortLoading, setAutoSortLoading] = useState(false);
 
   // Theme definitions
   const themes = {
@@ -96,6 +98,17 @@ export default function Dashboard() {
         // Check AI key
         const hasKey = await aiClassifier.current.checkApiKey();
         setHasAiKey(hasKey);
+
+        // Check auto-sort status
+        try {
+          const autoSortRes = await fetch('/api/autosort');
+          if (autoSortRes.ok) {
+            const autoSortData = await autoSortRes.json();
+            setAutoSortEnabled(autoSortData.enabled);
+          }
+        } catch (err) {
+          console.log('Auto-sort status check failed:', err);
+        }
 
         // Load cached data
         const cached = storage.get(['senders', 'classifications', 'categories', 'lastScan']);
@@ -549,6 +562,39 @@ export default function Dashboard() {
     });
   }
 
+  // Toggle auto-sort
+  async function toggleAutoSort() {
+    setAutoSortLoading(true);
+    try {
+      if (autoSortEnabled) {
+        // Disable auto-sort
+        const res = await fetch('/api/autosort', { method: 'DELETE' });
+        if (res.ok) {
+          setAutoSortEnabled(false);
+          alert('Auto-sort disabled. New emails will no longer be automatically labeled.');
+        } else {
+          const data = await res.json();
+          alert('Failed to disable auto-sort: ' + data.error);
+        }
+      } else {
+        // Enable auto-sort
+        const res = await fetch('/api/autosort', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) {
+          setAutoSortEnabled(true);
+          alert('Auto-sort enabled! New emails will be automatically labeled by category.');
+        } else {
+          alert('Failed to enable auto-sort: ' + data.error);
+        }
+      }
+    } catch (error) {
+      console.error('Toggle auto-sort error:', error);
+      alert('Failed to toggle auto-sort: ' + error.message);
+    } finally {
+      setAutoSortLoading(false);
+    }
+  }
+
   // Utility functions
   function extractEmail(from) {
     const match = from.match(/<([^>]+)>/);
@@ -618,6 +664,14 @@ export default function Dashboard() {
                 📊 SUMMARY
               </button>
             )}
+            <button
+              className={`btn ${autoSortEnabled ? 'btn-active' : ''}`}
+              onClick={toggleAutoSort}
+              disabled={autoSortLoading}
+              title={autoSortEnabled ? 'Auto-sort is ON - click to disable' : 'Enable auto-sort for new emails'}
+            >
+              {autoSortLoading ? '...' : autoSortEnabled ? '⚡ AUTO' : '⚡ AUTO'}
+            </button>
             <div className="status">
               <span className="status-dot"></span>
               <span>{userEmail}</span>

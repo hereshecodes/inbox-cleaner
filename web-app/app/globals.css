@@ -166,6 +166,17 @@ a {
   font-size: 11px;
 }
 
+.btn-active {
+  background: rgba(20, 240, 110, 0.2);
+  border-color: var(--terminal-green);
+  color: var(--terminal-green);
+  box-shadow: 0 0 10px rgba(20, 240, 110, 0.3);
+}
+
+.btn-active:hover {
+  background: rgba(20, 240, 110, 0.3);
+}
+
 .btn-block {
   width: 100%;
 }
