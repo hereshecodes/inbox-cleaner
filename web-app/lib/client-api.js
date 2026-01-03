@@ -70,11 +70,21 @@ class WebGmailAPI {
   }
 
   async getMessagesBatch(messageIds, format = 'metadata') {
-    // Process sequentially with rate limiting instead of parallel
+    // Process in small parallel batches with delays between
     const messages = [];
-    for (const id of messageIds) {
-      const msg = await this.getMessage(id, format);
-      messages.push(msg);
+    const batchSize = 10; // 10 parallel requests at a time
+
+    for (let i = 0; i < messageIds.length; i += batchSize) {
+      const batch = messageIds.slice(i, i + batchSize);
+      const results = await Promise.all(
+        batch.map(id => this.fetchWithRetry(`${this.baseUrl}/messages?id=${id}&format=${format}`))
+      );
+      messages.push(...results);
+
+      // 200ms delay between batches to stay under rate limits
+      if (i + batchSize < messageIds.length) {
+        await this.sleep(200);
+      }
     }
     return messages;
   }
