@@ -42,6 +42,7 @@ export default function Dashboard() {
   const [scanScope, setScanScope] = useState('inbox');
   const [searchFilter, setSearchFilter] = useState('');
   const [showSummary, setShowSummary] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const [hasAiKey, setHasAiKey] = useState(false);
   const [lastScan, setLastScan] = useState('Never');
   const [loading, setLoading] = useState(true);
@@ -568,6 +569,20 @@ export default function Dashboard() {
               <span className="status-dot"></span>
               <span>{userEmail}</span>
             </div>
+            <button
+              className="btn btn-sm"
+              onClick={() => setShowTutorial(true)}
+              title="How to use"
+            >
+              ?
+            </button>
+            <a
+              href="sms:+14792850861?body=HELP%20I%20broke%20the%20email%20thing%20you%20made%20me%20%F0%9F%98%AD%20pls%20respond%20im%20scared"
+              className="btn btn-sm btn-danger"
+              title="Panic button"
+            >
+              SOS
+            </a>
             <a href="/api/auth/logout" className="btn btn-sm">
               LOGOUT
             </a>
@@ -794,6 +809,53 @@ export default function Dashboard() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tutorial Modal */}
+      {showTutorial && (
+        <div className="modal" onClick={() => setShowTutorial(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>HOW TO USE</h2>
+
+            <div className="tutorial-steps">
+              <div className="tutorial-step">
+                <span className="step-icon">1️⃣</span>
+                <div className="step-content">
+                  <strong>Scan Your Inbox</strong>
+                  <p>Click "SCAN" to fetch all your email senders grouped together.</p>
+                </div>
+              </div>
+
+              <div className="tutorial-step">
+                <span className="step-icon">2️⃣</span>
+                <div className="step-content">
+                  <strong>Browse Categories</strong>
+                  <p>Use the sidebar to filter by category (Newsletters, Shopping, etc).</p>
+                </div>
+              </div>
+
+              <div className="tutorial-step">
+                <span className="step-icon">3️⃣</span>
+                <div className="step-content">
+                  <strong>Select & Delete</strong>
+                  <p>Check the senders you don't want, click "DELETE SELECTED".</p>
+                </div>
+              </div>
+
+              <div className="tutorial-step">
+                <span className="step-icon">💡</span>
+                <div className="step-content">
+                  <strong>Tip: Use Summary</strong>
+                  <p>After scanning, click SUMMARY to delete entire categories at once!</p>
+                </div>
+              </div>
+            </div>
+
+            <button className="btn btn-primary btn-block" onClick={() => setShowTutorial(false)}>
+              GOT IT!
+            </button>
           </div>
         </div>
       )}

@@ -7,9 +7,16 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(false);
   const error = searchParams.get('error');
 
   useEffect(() => {
+    // Check if first visit
+    const tutorialSeen = localStorage.getItem('inbox-cleaner-tutorial-seen');
+    if (!tutorialSeen) {
+      setShowTutorial(true);
+    }
+
     async function checkAuth() {
       try {
         const res = await fetch('/api/auth/session');
@@ -26,6 +33,11 @@ function LoginContent() {
     checkAuth();
   }, [router]);
 
+  const handleTutorialDone = () => {
+    localStorage.setItem('inbox-cleaner-tutorial-seen', 'true');
+    setShowTutorial(false);
+  };
+
   if (loading) {
     return (
       <div className="login-container">
@@ -37,9 +49,67 @@ function LoginContent() {
     );
   }
 
+  // Show tutorial on first visit
+  if (showTutorial) {
+    return (
+      <div className="login-container">
+        <div className="login-box tutorial-box">
+          <div className="login-logo">📧</div>
+          <h1>WELCOME!</h1>
+          <p className="text-dim">Here's how Inbox Cleaner works:</p>
+
+          <div className="tutorial-steps">
+            <div className="tutorial-step">
+              <span className="step-icon">1️⃣</span>
+              <div className="step-content">
+                <strong>Connect Gmail</strong>
+                <p>Sign in with Google. Your data stays in your browser.</p>
+              </div>
+            </div>
+
+            <div className="tutorial-step">
+              <span className="step-icon">2️⃣</span>
+              <div className="step-content">
+                <strong>Scan Your Inbox</strong>
+                <p>Click "SCAN" to see all your email senders grouped together.</p>
+              </div>
+            </div>
+
+            <div className="tutorial-step">
+              <span className="step-icon">3️⃣</span>
+              <div className="step-content">
+                <strong>Select & Delete</strong>
+                <p>Check the senders you don't want, click "DELETE SELECTED".</p>
+              </div>
+            </div>
+
+            <div className="tutorial-step">
+              <span className="step-icon">💡</span>
+              <div className="step-content">
+                <strong>Tip: Use Categories</strong>
+                <p>AI sorts emails into Newsletters, Shopping, etc. Delete entire categories at once!</p>
+              </div>
+            </div>
+          </div>
+
+          <button className="btn btn-primary btn-block" onClick={handleTutorialDone}>
+            LET'S GO!
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="login-container">
       <div className="login-box">
+        <button
+          className="help-btn"
+          onClick={() => setShowTutorial(true)}
+          title="How to use"
+        >
+          ?
+        </button>
         <div className="login-logo">📧</div>
         <h1>INBOX CLEANER</h1>
         <p className="text-dim">Privacy-first Gmail cleanup tool</p>
