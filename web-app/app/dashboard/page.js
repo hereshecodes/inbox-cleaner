@@ -911,6 +911,14 @@ export default function Dashboard() {
                   <p>After scanning, click SUMMARY to delete entire categories at once!</p>
                 </div>
               </div>
+
+              <div className="tutorial-step">
+                <span className="step-icon">📱</span>
+                <div className="step-content">
+                  <strong>Add to Home Screen</strong>
+                  <p>iPhone: Tap Share → "Add to Home Screen". Android: Tap menu → "Install app".</p>
+                </div>
+              </div>
             </div>
 
             <button className="btn btn-primary btn-block" onClick={() => setShowTutorial(false)}>
