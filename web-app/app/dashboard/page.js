@@ -249,7 +249,8 @@ export default function Dashboard() {
         const percent = Math.round(((i + chunk.length) / total) * 100);
         setProgress({ status: `Analyzing ${i + chunk.length} of ${total}...`, percent });
 
-        const details = await Promise.all(chunk.map((m) => gmailApi.current.getMessage(m.id, 'metadata')));
+        // Fetch sequentially with rate limiting to avoid 429 errors
+        const details = await gmailApi.current.getMessagesBatch(chunk.map(m => m.id), 'metadata');
 
         for (const msg of details) {
           if (!msg || !msg.payload) continue;

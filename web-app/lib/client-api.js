@@ -6,6 +6,24 @@
 class WebGmailAPI {
   constructor() {
     this.baseUrl = '/api/gmail';
+    this.lastRequestTime = 0;
+    this.minInterval = 100; // 100ms between requests (10 req/sec)
+  }
+
+  async sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async rateLimitedFetch(url, options = {}) {
+    const now = Date.now();
+    const timeSinceLastRequest = now - this.lastRequestTime;
+
+    if (timeSinceLastRequest < this.minInterval) {
+      await this.sleep(this.minInterval - timeSinceLastRequest);
+    }
+
+    this.lastRequestTime = Date.now();
+    return this.fetchWithRetry(url, options);
   }
 
   async fetchWithRetry(url, options = {}, retries = 1) {
@@ -46,9 +64,19 @@ class WebGmailAPI {
   }
 
   async getMessage(messageId, format = 'metadata') {
-    return this.fetchWithRetry(
+    return this.rateLimitedFetch(
       `${this.baseUrl}/messages?id=${messageId}&format=${format}`
     );
+  }
+
+  async getMessagesBatch(messageIds, format = 'metadata') {
+    // Process sequentially with rate limiting instead of parallel
+    const messages = [];
+    for (const id of messageIds) {
+      const msg = await this.getMessage(id, format);
+      messages.push(msg);
+    }
+    return messages;
   }
 
   async batchModify(messageIds, action) {
