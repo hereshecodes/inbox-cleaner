@@ -8,8 +8,58 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
+  <!-- Tutorial Screen (shown on first launch) -->
+  <div id="tutorial-screen" class="screen hidden">
+    <div class="header">
+      <div class="logo">
+        <span class="logo-icon">📧</span>
+        <h1>WELCOME!</h1>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="tutorial-steps">
+        <div class="tutorial-step">
+          <span class="step-icon">1️⃣</span>
+          <div class="step-content">
+            <strong>Connect Gmail</strong>
+            <p class="text-dim">Sign in with Google. Your data stays on your computer.</p>
+          </div>
+        </div>
+
+        <div class="tutorial-step">
+          <span class="step-icon">2️⃣</span>
+          <div class="step-content">
+            <strong>Open Dashboard & Scan</strong>
+            <p class="text-dim">Click "OPEN DASHBOARD" then "SCAN" to see all senders.</p>
+          </div>
+        </div>
+
+        <div class="tutorial-step">
+          <span class="step-icon">3️⃣</span>
+          <div class="step-content">
+            <strong>Select & Delete</strong>
+            <p class="text-dim">Check the senders you don't want, click "DELETE SELECTED".</p>
+          </div>
+        </div>
+
+        <div class="tutorial-step">
+          <span class="step-icon">💡</span>
+          <div class="step-content">
+            <strong>Tip: Use Categories</strong>
+            <p class="text-dim">AI sorts emails into Newsletters, Shopping, etc. Delete entire categories at once!</p>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-block" id="start-btn">
+        LET'S GO!
+      </button>
+    </div>
+  </div>
+
   <!-- Auth Screen -->
-  <div id="auth-screen" class="screen">
+  <div id="auth-screen" class="screen hidden">
     <div class="header">
       <div class="logo">
         <span class="logo-icon">📧</span>

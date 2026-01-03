@@ -12,6 +12,7 @@ let state = {
 
 // DOM Elements
 const screens = {
+  tutorial: document.getElementById('tutorial-screen'),
   auth: document.getElementById('auth-screen'),
   main: document.getElementById('main-screen'),
   settings: document.getElementById('settings-screen')
@@ -55,9 +56,24 @@ function updateProgress(processed, total) {
   elements.progressPercent.textContent = `${percent}%`;
 }
 
+// Check if first launch
+function isFirstLaunch() {
+  return !localStorage.getItem('inbox-cleaner-tutorial-seen');
+}
+
+function markTutorialSeen() {
+  localStorage.setItem('inbox-cleaner-tutorial-seen', 'true');
+}
+
 // Initialize
 async function init() {
   try {
+    // Show tutorial on first launch
+    if (isFirstLaunch()) {
+      showScreen('tutorial');
+      return;
+    }
+
     const isAuth = await gmailApi.isAuthenticated();
     if (isAuth) {
       await loadUserProfile();
@@ -69,6 +85,11 @@ async function init() {
     console.error('Init error:', error);
     showScreen('auth');
   }
+}
+
+function handleTutorialDone() {
+  markTutorialSeen();
+  showScreen('auth');
 }
 
 async function loadUserProfile() {
@@ -221,6 +242,7 @@ function handleCancel() {
 }
 
 // Event listeners
+document.getElementById('start-btn').addEventListener('click', handleTutorialDone);
 elements.connectBtn.addEventListener('click', handleConnect);
 elements.settingsBtn.addEventListener('click', () => showScreen('settings'));
 elements.backBtn.addEventListener('click', () => showScreen('main'));
