@@ -307,9 +307,16 @@ export default function Dashboard() {
           // Parse unsubscribe URL from header (format: <url> or <mailto:...>)
           let unsubscribeUrl = null;
           if (listUnsubscribe) {
+            // Try HTTP/HTTPS URL first
             const httpMatch = listUnsubscribe.match(/<(https?:\/\/[^>]+)>/);
             if (httpMatch) {
               unsubscribeUrl = httpMatch[1];
+            } else {
+              // Fallback: try bare URL without angle brackets
+              const bareMatch = listUnsubscribe.match(/(https?:\/\/[^\s,>]+)/);
+              if (bareMatch) {
+                unsubscribeUrl = bareMatch[1];
+              }
             }
           }
 
@@ -383,6 +390,11 @@ export default function Dashboard() {
 
         storage.set({ senders, classifications, categories, lastScan: Date.now() });
         setLastScan(new Date().toLocaleDateString());
+
+        // Log unsubscribe stats
+        const unsubCount = senders.filter(s => s.unsubscribeUrl).length;
+        console.log(`Found ${unsubCount} senders with unsubscribe links`);
+
         setShowSummary(true);
       }
     } catch (error) {
