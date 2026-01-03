@@ -36,6 +36,43 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ success: true });
     return true;
   }
+
+  // Handle AI classification requests (bypass CORS from service worker)
+  if (request.action === 'classifyWithAI') {
+    (async () => {
+      try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': request.apiKey,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+          },
+          body: JSON.stringify({
+            model: 'claude-3-haiku-20240307',
+            max_tokens: 1024,
+            messages: [{
+              role: 'user',
+              content: request.prompt
+            }]
+          })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          sendResponse({ error: error.error?.message || 'API request failed' });
+          return;
+        }
+
+        const data = await response.json();
+        sendResponse({ data });
+      } catch (error) {
+        sendResponse({ error: error.message });
+      }
+    })();
+    return true; // Keep channel open for async response
+  }
 });
 
 // Handle alarms for scheduled tasks (future feature)

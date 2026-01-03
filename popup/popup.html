@@ -15,24 +15,18 @@
         <span class="logo-icon">📧</span>
         <h1>INBOX CLEANER</h1>
       </div>
-      <div class="cursor">_</div>
     </div>
 
     <div class="content">
       <div class="terminal-box">
         <p>> SYSTEM REQUIRES GMAIL ACCESS</p>
         <p>> ALL DATA PROCESSED LOCALLY</p>
-        <p>> NO DATA SENT TO EXTERNAL SERVERS</p>
         <p>> PRIVACY FIRST DESIGN<span class="cursor">_</span></p>
       </div>
 
       <button class="btn btn-primary btn-block" id="connect-btn">
         CONNECT GMAIL
       </button>
-
-      <p class="privacy-note">
-        Only requests necessary permissions. Your emails never leave your browser.
-      </p>
     </div>
   </div>
 
@@ -50,72 +44,42 @@
     </div>
 
     <div class="content">
-      <!-- Stats -->
-      <div class="stats-grid">
-        <div class="stat">
-          <div class="stat-value" id="stat-subscriptions">--</div>
-          <div class="stat-label">Subs</div>
-        </div>
-        <div class="stat">
-          <div class="stat-value" id="stat-old">--</div>
-          <div class="stat-label">Old</div>
-        </div>
-        <div class="stat">
-          <div class="stat-value" id="stat-size">--</div>
-          <div class="stat-label">MB</div>
-        </div>
-      </div>
+      <p class="section-title">ACTIONS</p>
 
-      <!-- Quick Actions -->
       <div class="actions">
-        <button class="btn btn-block" id="scan-btn">
-          <span>🔍</span> SCAN INBOX
-        </button>
-
-        <button class="btn btn-block btn-amber" id="unsubscribe-btn" disabled>
-          <span>✉️</span> UNSUBSCRIBE
-          <span class="badge" id="unsub-count">0</span>
-        </button>
-
-        <button class="btn btn-block" id="cleanup-btn" disabled>
-          <span>🗑️</span> BULK CLEANUP
-        </button>
-
-        <button class="btn btn-block" id="dashboard-btn">
+        <button class="btn btn-block btn-primary" id="open-dashboard-btn">
           <span>📊</span> OPEN DASHBOARD
+          <span class="text-dim btn-hint">See top senders, archive by sender</span>
+        </button>
+
+        <button class="btn btn-block" id="archive-old-btn">
+          <span>📦</span> ARCHIVE OLD (90+ days)
+          <span class="text-dim btn-hint">older_than:90d → archive</span>
+        </button>
+
+        <button class="btn btn-block" id="archive-unread-btn">
+          <span>👻</span> ARCHIVE IGNORED EMAILS
+          <span class="text-dim btn-hint">unread + older_than:30d → archive</span>
         </button>
       </div>
 
-      <!-- Recent Subscriptions -->
-      <div class="section" id="subscriptions-section" style="display: none;">
-        <div class="section-header">
-          <span class="section-title">TOP SUBSCRIPTIONS</span>
-        </div>
-        <div id="subscriptions-list"></div>
+      <p class="section-title" style="margin-top: 16px;">STATUS</p>
+      <div id="status-box" class="terminal-box">
+        <p id="status-text">> Ready. Click a button above.</p>
       </div>
-    </div>
-  </div>
 
-  <!-- Scanning Screen -->
-  <div id="scanning-screen" class="screen hidden">
-    <div class="header">
-      <h1>SCANNING</h1>
-    </div>
-    <div class="content">
-      <div class="scanning-animation">
-        <div class="spinner"></div>
-      </div>
-      <p class="scanning-status" id="scanning-status">Initializing...</p>
-      <div class="progress-container">
-        <div class="progress-bar-bg">
-          <div class="progress-bar" id="scan-progress" style="width: 0%"></div>
+      <div id="progress-section" class="hidden">
+        <div class="progress-container">
+          <div class="progress-bar-bg">
+            <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+          </div>
+          <div class="progress-text">
+            <span id="progress-count">0</span>
+            <span id="progress-percent">0%</span>
+          </div>
         </div>
-        <div class="progress-text">
-          <span id="scan-count">0 emails</span>
-          <span id="scan-percent">0%</span>
-        </div>
+        <button class="btn btn-sm btn-danger" id="cancel-btn">CANCEL</button>
       </div>
-      <button class="btn btn-danger btn-block" id="cancel-scan-btn">CANCEL</button>
     </div>
   </div>
 
@@ -137,25 +101,14 @@
       </div>
 
       <div class="card">
-        <div class="card-title">Scan Settings</div>
-        <label class="checkbox">
-          <input type="checkbox" id="scan-all" checked>
-          <span>Include all mail (not just inbox)</span>
-        </label>
-      </div>
-
-      <div class="card">
         <div class="card-title">About</div>
-        <p class="text-dim">Inbox Cleaner v1.0.0</p>
-        <p class="text-dim">Privacy-first Gmail cleanup</p>
-        <p class="text-dim">All processing happens locally</p>
+        <p class="text-dim">Inbox Cleaner v2.0</p>
+        <p class="text-dim">Archive by sender, clean up fast</p>
       </div>
     </div>
   </div>
 
   <script src="../lib/gmail-api.js"></script>
-  <script src="../lib/email-parser.js"></script>
-  <script src="../lib/categorizer.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

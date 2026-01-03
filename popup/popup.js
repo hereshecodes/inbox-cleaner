@@ -1,57 +1,58 @@
 /**
  * Inbox Cleaner - Popup Script
+ * Simple actions + dashboard link
  */
 
-// Initialize API and utilities
 const gmailApi = new GmailAPI();
-const emailParser = new EmailParser();
-const categorizer = new EmailCategorizer();
 
-// State
 let state = {
-  isScanning: false,
-  emails: [],
-  subscriptions: [],
-  stats: null,
-  cancelScan: false
+  isProcessing: false,
+  cancelOperation: false
 };
 
 // DOM Elements
 const screens = {
   auth: document.getElementById('auth-screen'),
   main: document.getElementById('main-screen'),
-  scanning: document.getElementById('scanning-screen'),
   settings: document.getElementById('settings-screen')
 };
 
 const elements = {
   connectBtn: document.getElementById('connect-btn'),
-  scanBtn: document.getElementById('scan-btn'),
-  unsubscribeBtn: document.getElementById('unsubscribe-btn'),
-  cleanupBtn: document.getElementById('cleanup-btn'),
-  dashboardBtn: document.getElementById('dashboard-btn'),
   settingsBtn: document.getElementById('settings-btn'),
   backBtn: document.getElementById('back-btn'),
   disconnectBtn: document.getElementById('disconnect-btn'),
-  cancelScanBtn: document.getElementById('cancel-scan-btn'),
   userEmail: document.getElementById('user-email'),
   settingsEmail: document.getElementById('settings-email'),
-  statSubscriptions: document.getElementById('stat-subscriptions'),
-  statOld: document.getElementById('stat-old'),
-  statSize: document.getElementById('stat-size'),
-  unsubCount: document.getElementById('unsub-count'),
-  subscriptionsList: document.getElementById('subscriptions-list'),
-  subscriptionsSection: document.getElementById('subscriptions-section'),
-  scanProgress: document.getElementById('scan-progress'),
-  scanCount: document.getElementById('scan-count'),
-  scanPercent: document.getElementById('scan-percent'),
-  scanningStatus: document.getElementById('scanning-status')
+  statusText: document.getElementById('status-text'),
+  progressSection: document.getElementById('progress-section'),
+  progressBar: document.getElementById('progress-bar'),
+  progressCount: document.getElementById('progress-count'),
+  progressPercent: document.getElementById('progress-percent'),
+  cancelBtn: document.getElementById('cancel-btn'),
+  openDashboardBtn: document.getElementById('open-dashboard-btn'),
+  archiveOldBtn: document.getElementById('archive-old-btn'),
+  archiveUnreadBtn: document.getElementById('archive-unread-btn')
 };
 
-// Screen management
 function showScreen(screenName) {
   Object.values(screens).forEach(s => s.classList.add('hidden'));
   screens[screenName].classList.remove('hidden');
+}
+
+function setStatus(message) {
+  elements.statusText.textContent = '> ' + message;
+}
+
+function showProgress(show = true) {
+  elements.progressSection.classList.toggle('hidden', !show);
+}
+
+function updateProgress(processed, total) {
+  const percent = total > 0 ? Math.round((processed / total) * 100) : 0;
+  elements.progressBar.style.width = `${percent}%`;
+  elements.progressCount.textContent = `${processed} / ${total}`;
+  elements.progressPercent.textContent = `${percent}%`;
 }
 
 // Initialize
@@ -60,7 +61,6 @@ async function init() {
     const isAuth = await gmailApi.isAuthenticated();
     if (isAuth) {
       await loadUserProfile();
-      await loadCachedData();
       showScreen('main');
     } else {
       showScreen('auth');
@@ -71,7 +71,6 @@ async function init() {
   }
 }
 
-// Load user profile
 async function loadUserProfile() {
   try {
     const profile = await gmailApi.getProfile();
@@ -82,86 +81,10 @@ async function loadUserProfile() {
   }
 }
 
-// Load cached data from storage
-async function loadCachedData() {
-  return new Promise((resolve) => {
-    chrome.storage.local.get(['emails', 'subscriptions', 'stats', 'lastScan'], (data) => {
-      if (data.emails) {
-        state.emails = data.emails;
-        state.subscriptions = data.subscriptions || [];
-        state.stats = data.stats;
-        updateUI();
-      }
-      resolve();
-    });
-  });
-}
-
-// Save data to storage
-function saveData() {
-  chrome.storage.local.set({
-    emails: state.emails,
-    subscriptions: state.subscriptions,
-    stats: state.stats,
-    lastScan: Date.now()
-  });
-}
-
-// Update UI with current state
-function updateUI() {
-  if (state.stats) {
-    elements.statSubscriptions.textContent = state.stats.totalSubscriptions;
-    elements.statOld.textContent = state.stats.oldEmails;
-    elements.statSize.textContent = state.stats.totalSizeMB;
-  }
-
-  // Update unsubscribe button
-  const subCount = state.subscriptions.length;
-  elements.unsubCount.textContent = subCount;
-  elements.unsubscribeBtn.disabled = subCount === 0;
-  elements.cleanupBtn.disabled = state.emails.length === 0;
-
-  // Show subscriptions
-  if (state.subscriptions.length > 0) {
-    elements.subscriptionsSection.style.display = 'block';
-    renderSubscriptions();
-  } else {
-    elements.subscriptionsSection.style.display = 'none';
-  }
-}
-
-// Render subscription list
-function renderSubscriptions() {
-  const top5 = state.subscriptions.slice(0, 5);
-
-  elements.subscriptionsList.innerHTML = top5.map(sub => `
-    <div class="subscription-item">
-      <div class="subscription-icon">${sub.senderName.charAt(0)}</div>
-      <div class="subscription-info">
-        <div class="subscription-name">${escapeHtml(sub.senderName)}</div>
-        <div class="subscription-count">${sub.emailCount} emails</div>
-      </div>
-      <button class="btn btn-sm btn-amber subscription-action" data-email="${escapeHtml(sub.senderEmail)}">
-        UNSUB
-      </button>
-    </div>
-  `).join('');
-
-  // Add click handlers
-  elements.subscriptionsList.querySelectorAll('.subscription-action').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const email = e.target.dataset.email;
-      handleUnsubscribe(email);
-    });
-  });
-}
-
-// Connect Gmail
 async function handleConnect() {
   try {
     elements.connectBtn.disabled = true;
     elements.connectBtn.textContent = 'CONNECTING...';
-
     await gmailApi.getToken(true);
     await loadUserProfile();
     showScreen('main');
@@ -174,178 +97,137 @@ async function handleConnect() {
   }
 }
 
-// Scan inbox
-async function handleScan() {
-  if (state.isScanning) return;
-
-  state.isScanning = true;
-  state.cancelScan = false;
-  state.emails = [];
-
-  showScreen('scanning');
-  updateScanProgress(0, 0, 'Starting scan...');
-
-  try {
-    let pageToken = null;
-    let totalFetched = 0;
-    const allMessages = [];
-
-    // Fetch message IDs
-    do {
-      if (state.cancelScan) break;
-
-      updateScanProgress(0, totalFetched, 'Fetching email list...');
-
-      const response = await gmailApi.listMessages('', 500, pageToken);
-      const messages = response.messages || [];
-      allMessages.push(...messages);
-      totalFetched = allMessages.length;
-      pageToken = response.nextPageToken;
-
-      // Limit to 2000 for now
-      if (totalFetched >= 2000) break;
-
-    } while (pageToken && !state.cancelScan);
-
-    if (state.cancelScan) {
-      showScreen('main');
-      return;
-    }
-
-    // Fetch message details
-    const total = allMessages.length;
-    updateScanProgress(0, total, 'Analyzing emails...');
-
-    const chunks = chunkArray(allMessages, 50);
-    let processed = 0;
-
-    for (const chunk of chunks) {
-      if (state.cancelScan) break;
-
-      const details = await Promise.all(
-        chunk.map(m => gmailApi.getMessage(m.id, 'metadata'))
-      );
-
-      for (const msg of details) {
-        const parsed = emailParser.parseMessage(msg);
-        parsed.categories = categorizer.categorize(parsed);
-        state.emails.push(parsed);
-      }
-
-      processed += chunk.length;
-      const percent = Math.round((processed / total) * 100);
-      updateScanProgress(percent, processed, `Analyzed ${processed} of ${total}...`);
-    }
-
-    if (!state.cancelScan) {
-      // Calculate stats and subscriptions
-      state.stats = categorizer.getStats(state.emails);
-      state.subscriptions = categorizer.getSubscriptions(state.emails);
-
-      saveData();
-      updateUI();
-    }
-
-  } catch (error) {
-    console.error('Scan error:', error);
-    alert('Scan failed: ' + error.message);
-  } finally {
-    state.isScanning = false;
-    showScreen('main');
-  }
-}
-
-// Update scan progress UI
-function updateScanProgress(percent, count, status) {
-  elements.scanProgress.style.width = `${percent}%`;
-  elements.scanCount.textContent = `${count} emails`;
-  elements.scanPercent.textContent = `${percent}%`;
-  elements.scanningStatus.textContent = status;
-}
-
-// Handle unsubscribe
-async function handleUnsubscribe(senderEmail) {
-  const subscription = state.subscriptions.find(s => s.senderEmail === senderEmail);
-  if (!subscription || !subscription.unsubscribeInfo) {
-    alert('No unsubscribe method found for this sender.');
-    return;
-  }
-
-  const info = subscription.unsubscribeInfo;
-
-  try {
-    // Try one-click first
-    if (info.oneClick && info.httpUrl) {
-      await fetch(info.httpUrl, {
-        method: 'POST',
-        body: 'List-Unsubscribe=One-Click',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-      });
-      alert(`Unsubscribed from ${subscription.senderName}!`);
-      return;
-    }
-
-    // Try HTTP URL
-    if (info.httpUrl) {
-      chrome.tabs.create({ url: info.httpUrl, active: true });
-      return;
-    }
-
-    // Try mailto
-    if (info.mailto) {
-      const [address, params] = info.mailto.split('?');
-      const subject = new URLSearchParams(params).get('subject') || 'Unsubscribe';
-      await gmailApi.sendEmail(address, subject, 'Please unsubscribe me from this mailing list.');
-      alert(`Unsubscribe email sent to ${address}!`);
-      return;
-    }
-
-  } catch (error) {
-    console.error('Unsubscribe error:', error);
-    alert('Failed to unsubscribe: ' + error.message);
-  }
-}
-
-// Handle disconnect
 async function handleDisconnect() {
-  if (!confirm('Disconnect from Gmail? Your cached data will be cleared.')) return;
-
+  if (!confirm('Disconnect from Gmail?')) return;
   await gmailApi.revokeToken();
-  chrome.storage.local.clear();
-  state = { isScanning: false, emails: [], subscriptions: [], stats: null, cancelScan: false };
   showScreen('auth');
 }
 
-// Open dashboard
 function openDashboard() {
   chrome.tabs.create({ url: chrome.runtime.getURL('dashboard/dashboard.html') });
 }
 
-// Utility functions
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+async function getAllMessageIds(query) {
+  const allIds = [];
+  let pageToken = null;
+  let page = 0;
+
+  do {
+    if (state.cancelOperation) break;
+    page++;
+    setStatus(`Searching... (page ${page})`);
+
+    const response = await gmailApi.listMessages(query, 500, pageToken);
+    const messages = response.messages || [];
+    messages.forEach(m => allIds.push(m.id));
+    pageToken = response.nextPageToken;
+  } while (pageToken && !state.cancelOperation);
+
+  return allIds;
 }
 
-function chunkArray(array, size) {
-  const chunks = [];
-  for (let i = 0; i < array.length; i += size) {
-    chunks.push(array.slice(i, i + size));
+async function handleArchiveOld() {
+  if (state.isProcessing) return;
+
+  state.isProcessing = true;
+  state.cancelOperation = false;
+  showProgress(true);
+  setStatus('Finding old emails...');
+
+  try {
+    const ids = await getAllMessageIds('older_than:90d in:inbox');
+
+    if (ids.length === 0) {
+      setStatus('No emails older than 90 days in inbox.');
+      showProgress(false);
+      state.isProcessing = false;
+      return;
+    }
+
+    if (!confirm(`Archive ${ids.length} emails older than 90 days?\n\nThey stay searchable, just out of inbox.`)) {
+      setStatus('Cancelled.');
+      showProgress(false);
+      state.isProcessing = false;
+      return;
+    }
+
+    setStatus(`Archiving ${ids.length} emails...`);
+    updateProgress(0, ids.length);
+
+    const result = await gmailApi.batchModify(ids, 'archive', (progress) => {
+      if (state.cancelOperation) return;
+      updateProgress(progress.processed, progress.total);
+      setStatus(`Archiving... ${progress.processed}/${progress.total}`);
+    });
+
+    setStatus(`Done! Archived ${result.success} emails.`);
+  } catch (error) {
+    console.error('Archive error:', error);
+    setStatus('Error: ' + error.message);
+  } finally {
+    state.isProcessing = false;
+    showProgress(false);
   }
-  return chunks;
+}
+
+async function handleArchiveUnread() {
+  if (state.isProcessing) return;
+
+  state.isProcessing = true;
+  state.cancelOperation = false;
+  showProgress(true);
+  setStatus('Finding ignored emails...');
+
+  try {
+    // Unread emails older than 30 days = you're ignoring them
+    const ids = await getAllMessageIds('is:unread older_than:30d in:inbox');
+
+    if (ids.length === 0) {
+      setStatus('No ignored emails found. Nice!');
+      showProgress(false);
+      state.isProcessing = false;
+      return;
+    }
+
+    if (!confirm(`Archive ${ids.length} unread emails older than 30 days?\n\nThese are emails you haven't opened in a month.`)) {
+      setStatus('Cancelled.');
+      showProgress(false);
+      state.isProcessing = false;
+      return;
+    }
+
+    setStatus(`Archiving ${ids.length} emails...`);
+    updateProgress(0, ids.length);
+
+    const result = await gmailApi.batchModify(ids, 'archive', (progress) => {
+      if (state.cancelOperation) return;
+      updateProgress(progress.processed, progress.total);
+      setStatus(`Archiving... ${progress.processed}/${progress.total}`);
+    });
+
+    setStatus(`Done! Archived ${result.success} ignored emails.`);
+  } catch (error) {
+    console.error('Archive error:', error);
+    setStatus('Error: ' + error.message);
+  } finally {
+    state.isProcessing = false;
+    showProgress(false);
+  }
+}
+
+function handleCancel() {
+  state.cancelOperation = true;
+  setStatus('Cancelling...');
 }
 
 // Event listeners
 elements.connectBtn.addEventListener('click', handleConnect);
-elements.scanBtn.addEventListener('click', handleScan);
-elements.unsubscribeBtn.addEventListener('click', () => openDashboard());
-elements.cleanupBtn.addEventListener('click', () => openDashboard());
-elements.dashboardBtn.addEventListener('click', openDashboard);
 elements.settingsBtn.addEventListener('click', () => showScreen('settings'));
 elements.backBtn.addEventListener('click', () => showScreen('main'));
 elements.disconnectBtn.addEventListener('click', handleDisconnect);
-elements.cancelScanBtn.addEventListener('click', () => { state.cancelScan = true; });
+elements.cancelBtn.addEventListener('click', handleCancel);
+elements.openDashboardBtn.addEventListener('click', openDashboard);
+elements.archiveOldBtn.addEventListener('click', handleArchiveOld);
+elements.archiveUnreadBtn.addEventListener('click', handleArchiveUnread);
 
-// Initialize on load
 document.addEventListener('DOMContentLoaded', init);

@@ -17,7 +17,13 @@
           <h1>INBOX CLEANER</h1>
         </div>
         <div class="header-actions">
-          <button class="btn" id="refresh-btn">🔄 REFRESH</button>
+          <select class="select-input" id="scan-scope">
+            <option value="inbox">Inbox Only</option>
+            <option value="all">All Mail</option>
+          </select>
+          <button class="btn" id="scan-btn">🔄 SCAN</button>
+          <button class="btn hidden" id="show-summary-btn" title="Show AI Summary">📊 SUMMARY</button>
+          <button class="btn" id="ai-settings-btn" title="AI Settings">🤖</button>
           <div class="status">
             <span class="status-dot"></span>
             <span id="user-email">Loading...</span>
@@ -31,144 +37,98 @@
       <!-- Sidebar -->
       <aside class="sidebar">
         <nav class="nav">
-          <button class="nav-item active" data-view="subscriptions">
-            <span>✉️</span> Subscriptions
-          </button>
-          <button class="nav-item" data-view="categories">
-            <span>📁</span> Categories
-          </button>
-          <button class="nav-item" data-view="senders">
-            <span>👤</span> By Sender
-          </button>
-          <button class="nav-item" data-view="cleanup">
-            <span>🗑️</span> Bulk Cleanup
+          <!-- Dynamic category tabs will be rendered here by JavaScript -->
+          <button class="nav-item active" data-tab="all">
+            <span>📋</span> All Senders
+            <span class="nav-count" id="all-count">0</span>
           </button>
         </nav>
 
-        <!-- Stats -->
         <div class="sidebar-stats">
           <div class="stat-row">
-            <span>Total Emails</span>
+            <span>Emails Scanned</span>
             <span id="total-emails">--</span>
           </div>
           <div class="stat-row">
-            <span>Subscriptions</span>
-            <span id="total-subs">--</span>
+            <span>Last Scan</span>
+            <span id="last-scan">Never</span>
           </div>
-          <div class="stat-row">
-            <span>Storage Used</span>
-            <span id="total-size">-- MB</span>
-          </div>
+        </div>
+
+        <div class="sidebar-actions">
+          <button class="btn btn-sm" id="cleanup-labels-btn">🏷️ Clean Up Labels</button>
+        </div>
+
+        <div class="sidebar-help">
+          <p class="text-dim">Select senders, then delete all their emails at once.</p>
         </div>
       </aside>
 
       <!-- Content Area -->
       <div class="content">
-        <!-- Subscriptions View -->
-        <div id="subscriptions-view" class="view">
-          <div class="view-header">
-            <h2>SUBSCRIPTIONS</h2>
-            <p class="text-dim">Newsletters and mailing lists with unsubscribe option</p>
+        <!-- Scanning Progress -->
+        <div id="scan-progress" class="scan-progress hidden">
+          <h2>SCANNING...</h2>
+          <div class="progress-container">
+            <div class="progress-bar-bg">
+              <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+            </div>
+            <div class="progress-text">
+              <span id="progress-status">Starting...</span>
+              <span id="progress-percent">0%</span>
+            </div>
           </div>
-          <div class="toolbar">
-            <input type="text" class="search-input" id="search-subs" placeholder="Search subscriptions...">
-            <button class="btn btn-amber" id="unsubscribe-selected">UNSUBSCRIBE SELECTED</button>
-          </div>
-          <div id="subscriptions-list" class="list"></div>
-        </div>
-
-        <!-- Categories View -->
-        <div id="categories-view" class="view hidden">
-          <div class="view-header">
-            <h2>CATEGORIES</h2>
-            <p class="text-dim">Emails grouped by type</p>
-          </div>
-          <div id="categories-list" class="categories-grid"></div>
+          <button class="btn btn-danger" id="cancel-btn">CANCEL</button>
         </div>
 
         <!-- Senders View -->
-        <div id="senders-view" class="view hidden">
+        <div id="senders-view">
           <div class="view-header">
-            <h2>BY SENDER</h2>
-            <p class="text-dim">All emails grouped by sender</p>
+            <h2 id="tab-title">ALL SENDERS</h2>
+            <p class="text-dim" id="tab-description">Every sender in your inbox</p>
           </div>
+
+          <!-- Bulk Actions Toolbar -->
           <div class="toolbar">
+            <label class="checkbox select-all-wrapper">
+              <input type="checkbox" id="select-all">
+              <span>Select All</span>
+            </label>
             <input type="text" class="search-input" id="search-senders" placeholder="Search senders...">
-          </div>
-          <div id="senders-list" class="list"></div>
-        </div>
-
-        <!-- Cleanup View -->
-        <div id="cleanup-view" class="view hidden">
-          <div class="view-header">
-            <h2>BULK CLEANUP</h2>
-            <p class="text-dim">Delete or archive emails in bulk</p>
+            <button class="btn btn-danger" id="delete-selected-btn" disabled>
+              🗑️ DELETE SELECTED (<span id="selected-count">0</span>)
+            </button>
           </div>
 
-          <div class="cleanup-options">
-            <div class="cleanup-card" data-action="old">
-              <div class="cleanup-icon">🕐</div>
-              <div class="cleanup-info">
-                <h3>Old Emails</h3>
-                <p>Emails older than 1 year</p>
-                <span class="badge" id="old-count">0</span>
-              </div>
-              <button class="btn btn-danger">DELETE ALL</button>
-            </div>
-
-            <div class="cleanup-card" data-action="large">
-              <div class="cleanup-icon">📎</div>
-              <div class="cleanup-info">
-                <h3>Large Emails</h3>
-                <p>Emails larger than 5MB</p>
-                <span class="badge" id="large-count">0</span>
-              </div>
-              <button class="btn btn-danger">DELETE ALL</button>
-            </div>
-
-            <div class="cleanup-card" data-action="promotions">
-              <div class="cleanup-icon">🏷️</div>
-              <div class="cleanup-info">
-                <h3>Marketing & Promos</h3>
-                <p>Promotional emails</p>
-                <span class="badge" id="promo-count">0</span>
-              </div>
-              <button class="btn btn-danger">DELETE ALL</button>
-            </div>
-
-            <div class="cleanup-card" data-action="social">
-              <div class="cleanup-icon">👥</div>
-              <div class="cleanup-info">
-                <h3>Social Media</h3>
-                <p>Notifications from social networks</p>
-                <span class="badge" id="social-count">0</span>
-              </div>
-              <button class="btn btn-danger">DELETE ALL</button>
-            </div>
-          </div>
-
-          <!-- Progress -->
-          <div id="cleanup-progress" class="cleanup-progress hidden">
-            <h3>PROCESSING</h3>
-            <div class="progress-container">
-              <div class="progress-bar-bg">
-                <div class="progress-bar" id="cleanup-bar" style="width: 0%"></div>
-              </div>
-              <div class="progress-text">
-                <span id="cleanup-count">0 / 0</span>
-                <span id="cleanup-percent">0%</span>
+          <div id="senders-list" class="list">
+            <div class="empty-state">
+              <div class="empty-state-icon">📭</div>
+              <div class="empty-state-text">
+                Click "SCAN INBOX" to analyze your emails by sender.
               </div>
             </div>
-            <button class="btn btn-danger" id="cancel-cleanup">CANCEL</button>
           </div>
         </div>
       </div>
     </main>
   </div>
 
+  <!-- API Key Modal -->
+  <div id="api-key-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2>CLAUDE API KEY</h2>
+      <p class="text-dim">Enter your Claude API key for AI-powered sender classification.</p>
+      <p class="text-dim" style="margin-top: 8px;">Get one at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></p>
+      <input type="password" id="api-key-input" class="search-input" placeholder="sk-ant-..." style="width: 100%; margin: 16px 0;">
+      <div class="modal-actions">
+        <button class="btn" id="cancel-api-key">CANCEL</button>
+        <button class="btn btn-primary" id="save-api-key">SAVE</button>
+      </div>
+    </div>
+  </div>
+
   <script src="../lib/gmail-api.js"></script>
-  <script src="../lib/email-parser.js"></script>
-  <script src="../lib/categorizer.js"></script>
+  <script src="../lib/ai-classifier.js"></script>
   <script src="dashboard.js"></script>
 </body>
 </html>
