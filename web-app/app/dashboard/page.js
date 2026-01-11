@@ -571,7 +571,7 @@ export default function Dashboard() {
         const res = await fetch('/api/autosort', { method: 'DELETE' });
         if (res.ok) {
           setAutoSortEnabled(false);
-          alert('Auto-sort disabled. New emails will no longer be automatically labeled.');
+          alert('Hourly auto-sort disabled. Emails will no longer be automatically labeled.');
         } else {
           const data = await res.json();
           alert('Failed to disable auto-sort: ' + data.error);
@@ -582,7 +582,7 @@ export default function Dashboard() {
         const data = await res.json();
         if (res.ok) {
           setAutoSortEnabled(true);
-          alert('Auto-sort enabled! New emails will be automatically labeled by category.');
+          alert('Hourly auto-sort enabled! New emails will be labeled by category every hour.');
         } else {
           alert('Failed to enable auto-sort: ' + data.error);
         }
@@ -668,9 +668,9 @@ export default function Dashboard() {
               className={`btn ${autoSortEnabled ? 'btn-active' : ''}`}
               onClick={toggleAutoSort}
               disabled={autoSortLoading}
-              title={autoSortEnabled ? 'Auto-sort is ON - click to disable' : 'Enable auto-sort for new emails'}
+              title={autoSortEnabled ? 'Hourly auto-sort is ON - click to disable' : 'Enable hourly auto-sort for new emails'}
             >
-              {autoSortLoading ? '...' : autoSortEnabled ? '⚡ AUTO' : '⚡ AUTO'}
+              {autoSortLoading ? '...' : autoSortEnabled ? '⚡ HOURLY' : '⚡ HOURLY'}
             </button>
             <div className="status">
               <span className="status-dot"></span>

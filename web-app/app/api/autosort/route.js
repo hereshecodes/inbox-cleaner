@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-// Simple in-memory store for watch state (in production, use a database)
-const watchState = new Map();
+// Simple in-memory store for auto-sort state (in production, use a database)
+const autoSortState = new Map();
 
-// POST - Enable auto-sort (subscribe to Gmail push notifications)
+// POST - Enable hourly auto-sort
 export async function POST(request) {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get('access_token')?.value;
@@ -27,60 +27,23 @@ export async function POST(request) {
     const profile = await profileRes.json();
     const emailAddress = profile.emailAddress;
 
-    // Set up Gmail watch
-    // Note: You need to create a Pub/Sub topic first in Google Cloud Console
-    // Topic format: projects/YOUR_PROJECT_ID/topics/gmail-notifications
-    const topicName = process.env.GOOGLE_PUBSUB_TOPIC;
-
-    if (!topicName) {
-      return NextResponse.json(
-        { error: 'Pub/Sub topic not configured. Set GOOGLE_PUBSUB_TOPIC env var.' },
-        { status: 500 }
-      );
-    }
-
-    const watchRes = await fetch(
-      'https://www.googleapis.com/gmail/v1/users/me/watch',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          topicName,
-          labelIds: ['INBOX'],
-          labelFilterBehavior: 'INCLUDE',
-        }),
-      }
-    );
-
-    if (!watchRes.ok) {
-      const error = await watchRes.text();
-      console.error('Watch API error:', error);
-      throw new Error(`Failed to set up watch: ${error}`);
-    }
-
-    const watchData = await watchRes.json();
-    console.log('Watch set up:', watchData);
-
-    // Store watch state
-    watchState.set(emailAddress, {
-      historyId: watchData.historyId,
-      expiration: watchData.expiration,
+    // Store auto-sort state
+    autoSortState.set(emailAddress, {
       enabled: true,
+      enabledAt: Date.now(),
     });
 
-    // Store the access token for webhook use
+    // Store the access token for hourly cron job
     // In production, store refresh token in database
     const { storeUserToken } = await import('../webhook/gmail/route.js');
     const refreshToken = cookieStore.get('refresh_token')?.value;
     storeUserToken(emailAddress, accessToken, refreshToken);
 
+    console.log(`Hourly auto-sort enabled for ${emailAddress}`);
+
     return NextResponse.json({
       success: true,
-      message: 'Auto-sort enabled!',
-      expiration: watchData.expiration,
+      message: 'Hourly auto-sort enabled! New emails will be sorted every hour.',
     });
   } catch (error) {
     console.error('Enable auto-sort error:', error);
@@ -88,7 +51,7 @@ export async function POST(request) {
   }
 }
 
-// DELETE - Disable auto-sort (stop watching)
+// DELETE - Disable hourly auto-sort
 export async function DELETE(request) {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get('access_token')?.value;
@@ -98,20 +61,6 @@ export async function DELETE(request) {
   }
 
   try {
-    // Stop the watch
-    const stopRes = await fetch(
-      'https://www.googleapis.com/gmail/v1/users/me/stop',
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }
-    );
-
-    if (!stopRes.ok) {
-      const error = await stopRes.text();
-      console.error('Stop watch error:', error);
-    }
-
     // Get user email and clear state
     const profileRes = await fetch(
       'https://www.googleapis.com/gmail/v1/users/me/profile',
@@ -120,12 +69,18 @@ export async function DELETE(request) {
 
     if (profileRes.ok) {
       const profile = await profileRes.json();
-      watchState.delete(profile.emailAddress);
+      autoSortState.delete(profile.emailAddress);
+
+      // Remove user token from cron job list
+      const { removeUserToken } = await import('../webhook/gmail/route.js');
+      removeUserToken(profile.emailAddress);
+
+      console.log(`Hourly auto-sort disabled for ${profile.emailAddress}`);
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Auto-sort disabled',
+      message: 'Hourly auto-sort disabled',
     });
   } catch (error) {
     console.error('Disable auto-sort error:', error);
@@ -153,11 +108,11 @@ export async function GET(request) {
     }
 
     const profile = await profileRes.json();
-    const state = watchState.get(profile.emailAddress);
+    const state = autoSortState.get(profile.emailAddress);
 
     return NextResponse.json({
       enabled: state?.enabled || false,
-      expiration: state?.expiration || null,
+      schedule: 'hourly',
     });
   } catch (error) {
     console.error('Get auto-sort status error:', error);

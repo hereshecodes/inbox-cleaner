@@ -31,6 +31,16 @@ export function getUserToken(userId) {
   return userTokens.get(userId);
 }
 
+// Get all enrolled users for hourly cron job
+export function getAllUserTokens() {
+  return userTokens;
+}
+
+// Remove user from auto-sort
+export function removeUserToken(userId) {
+  userTokens.delete(userId);
+}
+
 // POST - Receive push notifications from Google Pub/Sub
 export async function POST(request) {
   try {
